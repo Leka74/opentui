@@ -42,6 +42,7 @@ import * as splitModeExample from "./split-mode-demo"
 import * as consoleExample from "./console-demo"
 import * as hastSyntaxHighlightingExample from "./hast-syntax-highlighting-demo"
 import * as liveStateExample from "./live-state-demo"
+import * as scrollBarExample from "./scollbar-demo"
 import { getKeyHandler } from "../lib/KeyHandler"
 import { setupCommonDemoKeys } from "./lib/standalone-keys"
 
@@ -53,6 +54,12 @@ interface Example {
 }
 
 const examples: Example[] = [
+  {
+    name: "ScrollBar Demo",
+    description: "",
+    run: scrollBarExample.run,
+    destroy: scrollBarExample.destroy,
+  },
   {
     name: "Mouse Interaction Demo",
     description: "Interactive mouse trails and clickable cells demonstration",
@@ -379,7 +386,6 @@ class ExampleSelector {
         case "\u0003":
           this.cleanup()
           process.exit()
-          break
       }
     })
     setupCommonDemoKeys(this.renderer)
