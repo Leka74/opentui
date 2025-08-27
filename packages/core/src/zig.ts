@@ -394,6 +394,7 @@ export interface RenderLib {
     borderColor: RGBA,
     backgroundColor: RGBA,
     title: string | null,
+    clipRect?: { x: number; y: number; width: number; height: number }
   ) => void
   bufferResize: (
     buffer: Pointer,
