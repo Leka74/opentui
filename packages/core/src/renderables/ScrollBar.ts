@@ -4,12 +4,12 @@ import type { ParsedKey } from "../lib/parse.keypress"
 import { RGBA, parseColor } from "../lib/RGBA"
 import { MouseEvent } from ".."
 
-
 export interface ScrollBarRenderableOptions extends RenderableOptions {
   trackColor?: string | RGBA,
   thumbColor?: string | RGBA,
   orientation?: "horizontal" | "vertical"
   contentSize: { width: number, height: number }
+  viewportSize: { width: number, height: number }
 }
 
 export enum ScrollSource {
@@ -37,6 +37,7 @@ export class ScrollBarRenderable extends Renderable {
   private _thumbColor: RGBA
   private _orientation: "horizontal" | "vertical"
   private _contentSize: { width: number, height: number }
+  private _viewportSize: { width: number, height: number }
 
   private offset: number = 0
   private maxOffset: number
@@ -62,13 +63,14 @@ export class ScrollBarRenderable extends Renderable {
     super(id, { ...options, buffered: true })
 
     this._contentSize = options.contentSize
+    this._viewportSize = options.viewportSize
     this._orientation = options.orientation || this._defaultOptions.orientation
     this._trackColor = parseColor(options.trackColor || this._defaultOptions.trackColor)
     this._thumbColor = parseColor(options.thumbColor || this._defaultOptions.thumbColor)
 
     this.maxOffset = this._orientation === "vertical"
-      ? Math.max(this._contentSize.height - this.height, 0)
-      : Math.max(this._contentSize.width - this.width, 0)
+      ? Math.max(this._contentSize.height - this._viewportSize.height, 0)
+      : Math.max(this._contentSize.width - this._viewportSize.width, 0)
 
     this.needsUpdate()
   }
@@ -99,7 +101,7 @@ export class ScrollBarRenderable extends Renderable {
 
   private move(delta: number, type: ScrollSource) {
     const newOffset = clamp(this.offset + delta, 0, this.maxOffset)
-    const size = isVertical(this._orientation) ? this.height : this.width;
+    const size = isVertical(this._orientation) ? this._viewportSize.height : this._viewportSize.width;
     const ratio = this.maxOffset ? newOffset / this.maxOffset : 0
     this.ratio = ratio
     this.emit(ScrollBarEvents.USER_SCROLL, {
@@ -119,7 +121,7 @@ export class ScrollBarRenderable extends Renderable {
 
   private updateThumb() {
     const vertical = isVertical(this._orientation)
-    const size = vertical ? this.height : this.width
+    const size = vertical ? this._viewportSize.height : this._viewportSize.width
     const content = vertical ? this._contentSize.height : this._contentSize.width
 
     const thumbSize = Math.max(1, Math.ceil((size / content) * size))
@@ -141,8 +143,8 @@ export class ScrollBarRenderable extends Renderable {
     }
 
     const newPathSize = {
-      width: vertical ? 2 : this.width,
-      height: vertical ? this.height : 1,
+      width: vertical ? 2 : this._viewportSize.width,
+      height: vertical ? this._viewportSize.height : 1,
     }
 
     if (!Bun.deepMatch(newPathSize, this.pathSize)) {
@@ -211,11 +213,11 @@ export class ScrollBarRenderable extends Renderable {
     // No touchpad event
     if (event.type === "scroll" && event.scroll && isVertical(this._orientation)) {
       const delta = event.scroll.delta * (event.scroll.direction === "up" ? -1 : 1);
-      
+
       this.move(delta, ScrollSource.WHEEL);
     }
     if (["down", "drag", "drag-end"].includes(event.type)) {
-      const size = isVertical(this._orientation) ? this.height : this.width;
+      const size = isVertical(this._orientation) ? this._viewportSize.height : this._viewportSize.width;
       const ratio = clamp((isVertical(this._orientation) ? event.y : event.x) / (size - 1), 0, 1);
 
       this.ratio = ratio
